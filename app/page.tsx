@@ -37,7 +37,10 @@ export default function Home() {
             </span>
           </Link>
 
-          <article className="rounded-3xl border border-black/10 bg-white/70 p-6 shadow-sm">
+          <Link
+            href="/execucao"
+            className="group rounded-3xl border border-black/10 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
               Modulo 02
             </p>
@@ -45,10 +48,10 @@ export default function Home() {
             <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
               Registro do que foi executado em cada treino para apoiar sua progressao.
             </p>
-            <span className="mt-6 inline-flex rounded-full border border-black/15 px-3 py-1 text-xs font-semibold">
-              Em breve
+            <span className="mt-6 inline-flex items-center text-sm font-semibold text-[var(--accent)] group-hover:underline">
+              Acessar modulo
             </span>
-          </article>
+          </Link>
 
           <article className="rounded-3xl border border-black/10 bg-white/70 p-6 shadow-sm">
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
