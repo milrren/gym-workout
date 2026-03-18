@@ -160,6 +160,7 @@ export default function FichasPage() {
   const [fichas, setFichas] = useState<Ficha[]>(loadFichasFromStorage);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [exerciciosCadastro, setExerciciosCadastro] = useState<Exercicio[]>([]);
+  const [fichaEmEdicaoId, setFichaEmEdicaoId] = useState<string | null>(null);
   const [modalAberta, setModalAberta] = useState(false);
   const [exercicioDraft, setExercicioDraft] = useState<ExercicioDraft>(INITIAL_EXERCICIO_DRAFT);
   const [error, setError] = useState<string | null>(null);
@@ -173,6 +174,13 @@ export default function FichasPage() {
     () => fichas.reduce((acc, ficha) => acc + ficha.exercicios.length, 0),
     [fichas],
   );
+
+  function resetFormulario() {
+    setForm(INITIAL_FORM);
+    setExerciciosCadastro([]);
+    setFichaEmEdicaoId(null);
+    setError(null);
+  }
 
   function cadastrarFicha(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -196,16 +204,23 @@ export default function FichasPage() {
       return;
     }
 
+    const idFicha = fichaEmEdicaoId ?? createId();
     const novaFicha: Ficha = {
-      id: createId(),
+      id: idFicha,
       nome,
       exercicios: exerciciosCadastro,
       descanso,
     };
 
-    setFichas((current) => [novaFicha, ...current]);
-    setForm(INITIAL_FORM);
-    setExerciciosCadastro([]);
+    if (fichaEmEdicaoId) {
+      setFichas((current) =>
+        current.map((ficha) => (ficha.id === fichaEmEdicaoId ? novaFicha : ficha)),
+      );
+    } else {
+      setFichas((current) => [novaFicha, ...current]);
+    }
+
+    resetFormulario();
   }
 
   function abrirModalExercicio() {
@@ -261,6 +276,20 @@ export default function FichasPage() {
 
   function removerFicha(id: string) {
     setFichas((current) => current.filter((ficha) => ficha.id !== id));
+
+    if (fichaEmEdicaoId === id) {
+      resetFormulario();
+    }
+  }
+
+  function iniciarEdicaoFicha(ficha: Ficha) {
+    setFichaEmEdicaoId(ficha.id);
+    setForm({
+      nome: ficha.nome,
+      descanso: String(ficha.descanso),
+    });
+    setExerciciosCadastro(ficha.exercicios.map((exercicio) => ({ ...exercicio })));
+    setError(null);
   }
 
   return (
@@ -308,10 +337,24 @@ export default function FichasPage() {
         <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <form
             onSubmit={cadastrarFicha}
-            className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm"
+            className={`rounded-3xl border border-black/10 p-6 shadow-sm ${
+              fichaEmEdicaoId ? "bg-[#fff7d6]" : "bg-white"
+            }`}
           >
-            <h2 className="text-xl font-bold text-[var(--text-primary)]">Nova ficha</h2>
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">
+              {fichaEmEdicaoId ? "Editar ficha" : "Nova ficha"}
+            </h2>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">Monte sua lista de exercicios.</p>
+
+            {fichaEmEdicaoId ? (
+              <button
+                type="button"
+                onClick={resetFormulario}
+                className="mt-4 rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+              >
+                Cancelar edicao
+              </button>
+            ) : null}
 
             <label className="mt-5 block text-sm font-semibold text-[var(--text-primary)]">
               Nome
@@ -387,7 +430,7 @@ export default function FichasPage() {
               type="submit"
               className="mt-6 w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-95"
             >
-              Cadastrar ficha
+              {fichaEmEdicaoId ? "Salvar alteracoes" : "Cadastrar ficha"}
             </button>
           </form>
 
@@ -409,13 +452,22 @@ export default function FichasPage() {
                         </p>
                         <h3 className="mt-2 text-lg font-bold text-[var(--text-primary)]">{ficha.nome}</h3>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removerFicha(ficha.id)}
-                        className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
-                      >
-                        Remover
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => iniciarEdicaoFicha(ficha)}
+                          className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removerFicha(ficha.id)}
+                          className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+                        >
+                          Remover
+                        </button>
+                      </div>
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-[var(--text-secondary)]">
