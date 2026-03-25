@@ -2,24 +2,30 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
-import {
-  formatDateTime,
-  loadSessoesFromStorage,
-  saveSessoesToStorage,
-  SessaoTreino,
-} from "@/lib/workout-storage";
+import { useEffect, useMemo, useState } from "react";
+import { formatDateTime, SessaoTreino } from "@/lib/workout-storage";
 
 export default function SessaoPage() {
   const params = useParams<{ sessaoId: string }>();
   const sessaoId = params.sessaoId;
 
-  const [sessoes, setSessoes] = useState(loadSessoesFromStorage);
+  const [sessao, setSessao] = useState<SessaoTreino | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
-  const sessao = useMemo(
-    () => sessoes.find((item) => item.id === sessaoId) ?? null,
-    [sessoes, sessaoId],
-  );
+  useEffect(() => {
+    fetch(`/api/sessoes/${sessaoId}`)
+      .then((res) => {
+        if (res.status === 404) {
+          setNotFound(true);
+          return null;
+        }
+        return res.json() as Promise<SessaoTreino>;
+      })
+      .then((data) => {
+        if (data) setSessao(data);
+      })
+      .catch(() => setNotFound(true));
+  }, [sessaoId]);
 
   const exerciciosExecutados = useMemo(() => {
     if (!sessao) {
@@ -32,9 +38,17 @@ export default function SessaoPage() {
   }, [sessao]);
 
   function atualizarSessao(updated: SessaoTreino) {
-    const proximasSessoes = sessoes.map((item) => (item.id === updated.id ? updated : item));
-    setSessoes(proximasSessoes);
-    saveSessoesToStorage(proximasSessoes);
+    fetch(`/api/sessoes/${updated.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        exerciciosConcluidosIds: updated.exerciciosConcluidosIds,
+        endedAt: updated.endedAt,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => setSessao(data as SessaoTreino))
+      .catch(() => {});
   }
 
   function alternarExercicioConcluido(exercicioId: string) {
@@ -64,7 +78,7 @@ export default function SessaoPage() {
     });
   }
 
-  if (!sessao) {
+  if (notFound) {
     return (
       <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-6 py-10 sm:px-10">
         <main className="mx-auto w-full max-w-3xl rounded-3xl border border-black/10 bg-white p-8 shadow-sm">
@@ -81,6 +95,10 @@ export default function SessaoPage() {
         </main>
       </div>
     );
+  }
+
+  if (!sessao) {
+    return null;
   }
 
   const percentualExecutado =

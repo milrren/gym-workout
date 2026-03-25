@@ -28,8 +28,6 @@ type ExercicioDraft = {
   pesoSugerido: string;
 };
 
-const STORAGE_KEY = "gym-workout:fichas";
-
 const INITIAL_FORM: FormState = {
   nome: "",
   descanso: "60",
@@ -46,118 +44,11 @@ function createId() {
     return crypto.randomUUID();
   }
 
-  return `ficha-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-}
-
-function normalizeExercicio(input: unknown): Exercicio | null {
-  if (typeof input === "string") {
-    const descricao = input.trim();
-
-    if (!descricao) {
-      return null;
-    }
-
-    return {
-      id: createId(),
-      descricao,
-      series: 0,
-      pesoSugerido: null,
-    };
-  }
-
-  if (!input || typeof input !== "object") {
-    return null;
-  }
-
-  const candidate = input as Partial<Exercicio> & {
-    descricao?: unknown;
-    series?: unknown;
-    repeticoes?: unknown;
-  };
-  const descricao = typeof candidate.descricao === "string" ? candidate.descricao.trim() : "";
-
-  if (!descricao) {
-    return null;
-  }
-
-  // Accept `repeticoes` for legacy data saved before renaming to `series`.
-  const seriesRaw = candidate.series ?? candidate.repeticoes;
-  const series =
-    typeof seriesRaw === "number" && Number.isFinite(seriesRaw)
-      ? seriesRaw
-      : Number(seriesRaw);
-  const pesoNumero =
-    typeof candidate.pesoSugerido === "number" && Number.isFinite(candidate.pesoSugerido)
-      ? candidate.pesoSugerido
-      : Number(candidate.pesoSugerido);
-
-  return {
-    id: typeof candidate.id === "string" && candidate.id ? candidate.id : createId(),
-    descricao,
-    series: Number.isFinite(series) ? series : 0,
-    pesoSugerido: Number.isFinite(pesoNumero) ? pesoNumero : null,
-  };
-}
-
-function normalizeFicha(input: unknown): Ficha | null {
-  if (!input || typeof input !== "object") {
-    return null;
-  }
-
-  const candidate = input as Partial<Ficha> & {
-    nome?: unknown;
-    descanso?: unknown;
-    exercicios?: unknown;
-  };
-
-  const nome = typeof candidate.nome === "string" ? candidate.nome.trim() : "";
-  const descanso = Number(candidate.descanso);
-
-  if (!nome || !Number.isFinite(descanso) || descanso <= 0) {
-    return null;
-  }
-
-  const exerciciosArray = Array.isArray(candidate.exercicios) ? candidate.exercicios : [];
-  const exercicios = exerciciosArray
-    .map((item) => normalizeExercicio(item))
-    .filter((item): item is Exercicio => item !== null);
-
-  return {
-    id: typeof candidate.id === "string" && candidate.id ? candidate.id : createId(),
-    nome,
-    descanso,
-    exercicios,
-  };
-}
-
-function loadFichasFromStorage(): Ficha[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed
-      .map((item) => normalizeFicha(item))
-      .filter((item): item is Ficha => item !== null);
-  } catch {
-    return [];
-  }
+  return `exercicio-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
 export default function FichasPage() {
-  const [fichas, setFichas] = useState<Ficha[]>(loadFichasFromStorage);
+  const [fichas, setFichas] = useState<Ficha[]>([]);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [exerciciosCadastro, setExerciciosCadastro] = useState<Exercicio[]>([]);
   const [fichaEmEdicaoId, setFichaEmEdicaoId] = useState<string | null>(null);
@@ -165,10 +56,15 @@ export default function FichasPage() {
   const [exercicioDraft, setExercicioDraft] = useState<ExercicioDraft>(INITIAL_EXERCICIO_DRAFT);
   const [error, setError] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fichas));
-  }, [fichas]);
+    fetch("/api/fichas")
+      .then((res) => res.json())
+      .then((data) => setFichas(data as Ficha[]))
+      .catch(() => setFichas([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   const totalExercicios = useMemo(
     () => fichas.reduce((acc, ficha) => acc + ficha.exercicios.length, 0),
@@ -204,20 +100,31 @@ export default function FichasPage() {
       return;
     }
 
-    const idFicha = fichaEmEdicaoId ?? createId();
-    const novaFicha: Ficha = {
-      id: idFicha,
-      nome,
-      exercicios: exerciciosCadastro,
-      descanso,
-    };
+    const payload = { nome, exercicios: exerciciosCadastro, descanso };
 
     if (fichaEmEdicaoId) {
-      setFichas((current) =>
-        current.map((ficha) => (ficha.id === fichaEmEdicaoId ? novaFicha : ficha)),
-      );
+      const editingId = fichaEmEdicaoId;
+      fetch(`/api/fichas/${editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .then((res) => res.json())
+        .then((updated) =>
+          setFichas((current) =>
+            current.map((f) => (f.id === editingId ? (updated as Ficha) : f)),
+          ),
+        )
+        .catch(() => setError("Erro ao salvar ficha."));
     } else {
-      setFichas((current) => [novaFicha, ...current]);
+      fetch("/api/fichas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .then((res) => res.json())
+        .then((created) => setFichas((current) => [created as Ficha, ...current]))
+        .catch(() => setError("Erro ao cadastrar ficha."));
     }
 
     resetFormulario();
@@ -280,6 +187,13 @@ export default function FichasPage() {
     if (fichaEmEdicaoId === id) {
       resetFormulario();
     }
+
+    fetch(`/api/fichas/${id}`, { method: "DELETE" }).catch(() => {
+      // Re-fetch to restore state if delete failed
+      fetch("/api/fichas")
+        .then((res) => res.json())
+        .then((data) => setFichas(data as Ficha[]));
+    });
   }
 
   function iniciarEdicaoFicha(ficha: Ficha) {
@@ -317,7 +231,7 @@ export default function FichasPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                 Fichas
               </p>
-              <p className="mt-2 text-3xl font-bold text-[var(--text-primary)]">{fichas.length}</p>
+              <p className="mt-2 text-3xl font-bold text-[var(--text-primary)]">{loading ? "—" : fichas.length}</p>
             </article>
             <article className="rounded-2xl border border-black/10 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
@@ -329,7 +243,7 @@ export default function FichasPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                 Persistencia
               </p>
-              <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">localStorage (client side)</p>
+              <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">MongoDB</p>
             </article>
           </div>
         </header>

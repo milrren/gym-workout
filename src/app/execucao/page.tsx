@@ -2,20 +2,32 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import {
-  createId,
-  formatDateTime,
-  loadFichasFromStorage,
-  loadSessoesFromStorage,
-  saveSessoesToStorage,
-  SessaoTreino,
-} from "@/lib/workout-storage";
+import { useEffect, useMemo, useState } from "react";
+import { formatDateTime, SessaoTreino } from "@/lib/workout-storage";
+
+type Ficha = {
+  id: string;
+  nome: string;
+  exercicios: { id: string; descricao: string; series: number; pesoSugerido: number | null }[];
+  descanso: number;
+};
 
 export default function ExecucaoPage() {
   const router = useRouter();
-  const [fichas] = useState(loadFichasFromStorage);
-  const [sessoes, setSessoes] = useState(loadSessoesFromStorage);
+  const [fichas, setFichas] = useState<Ficha[]>([]);
+  const [sessoes, setSessoes] = useState<SessaoTreino[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/fichas").then((r) => r.json()),
+      fetch("/api/sessoes").then((r) => r.json()),
+    ])
+      .then(([fichasData, sessoesData]) => {
+        setFichas(fichasData as Ficha[]);
+        setSessoes(sessoesData as SessaoTreino[]);
+      })
+      .catch(() => {});
+  }, []);
 
   const sessoesFinalizadas = useMemo(
     () => sessoes.filter((sessao) => sessao.endedAt !== null),
@@ -23,27 +35,16 @@ export default function ExecucaoPage() {
   );
 
   function iniciarSessao(fichaId: string) {
-    const ficha = fichas.find((item) => item.id === fichaId);
-
-    if (!ficha) {
-      return;
-    }
-
-    const novaSessao: SessaoTreino = {
-      id: createId("sessao"),
-      fichaId: ficha.id,
-      fichaNome: ficha.nome,
-      exercicios: ficha.exercicios,
-      exerciciosConcluidosIds: [],
-      startedAt: new Date().toISOString(),
-      endedAt: null,
-    };
-
-    const proximasSessoes = [novaSessao, ...sessoes];
-    setSessoes(proximasSessoes);
-    saveSessoesToStorage(proximasSessoes);
-
-    router.push(`/execucao/sessao/${novaSessao.id}`);
+    fetch("/api/sessoes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fichaId }),
+    })
+      .then((res) => res.json())
+      .then((novaSessao) => {
+        router.push(`/execucao/sessao/${(novaSessao as SessaoTreino).id}`);
+      })
+      .catch(() => {});
   }
 
   return (

@@ -22,9 +22,6 @@ export type SessaoTreino = {
   endedAt: string | null;
 };
 
-export const FICHAS_STORAGE_KEY = "gym-workout:fichas";
-export const SESSOES_STORAGE_KEY = "gym-workout:sessoes";
-
 export function createId(prefix: string) {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${prefix}-${crypto.randomUUID()}`;
@@ -84,7 +81,7 @@ function normalizeExercicio(input: unknown): Exercicio | null {
   };
 }
 
-function normalizeFicha(input: unknown): Ficha | null {
+export function normalizeFicha(input: unknown): Ficha | null {
   if (!input || typeof input !== "object") {
     return null;
   }
@@ -113,107 +110,6 @@ function normalizeFicha(input: unknown): Ficha | null {
     descanso,
     exercicios,
   };
-}
-
-function normalizeSessao(input: unknown): SessaoTreino | null {
-  if (!input || typeof input !== "object") {
-    return null;
-  }
-
-  const candidate = input as Partial<SessaoTreino> & {
-    fichaNome?: unknown;
-    exerciciosConcluidosIds?: unknown;
-    startedAt?: unknown;
-    endedAt?: unknown;
-  };
-
-  const fichaNome = typeof candidate.fichaNome === "string" ? candidate.fichaNome.trim() : "";
-  const startedAt = typeof candidate.startedAt === "string" ? candidate.startedAt : "";
-  const endedAt = typeof candidate.endedAt === "string" ? candidate.endedAt : null;
-  const exercicios = Array.isArray(candidate.exercicios)
-    ? candidate.exercicios
-        .map((item) => normalizeExercicio(item))
-        .filter((item): item is Exercicio => item !== null)
-    : [];
-  const exerciciosConcluidosIds = Array.isArray(candidate.exerciciosConcluidosIds)
-    ? candidate.exerciciosConcluidosIds.filter(
-        (item): item is string => typeof item === "string" && item.length > 0,
-      )
-    : [];
-
-  if (!fichaNome || !startedAt) {
-    return null;
-  }
-
-  return {
-    id: typeof candidate.id === "string" && candidate.id ? candidate.id : createId("sessao"),
-    fichaId: typeof candidate.fichaId === "string" ? candidate.fichaId : "",
-    fichaNome,
-    exercicios,
-    exerciciosConcluidosIds,
-    startedAt,
-    endedAt,
-  };
-}
-
-export function loadFichasFromStorage(): Ficha[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  const raw = window.localStorage.getItem(FICHAS_STORAGE_KEY);
-
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed
-      .map((item) => normalizeFicha(item))
-      .filter((item): item is Ficha => item !== null);
-  } catch {
-    return [];
-  }
-}
-
-export function loadSessoesFromStorage(): SessaoTreino[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  const raw = window.localStorage.getItem(SESSOES_STORAGE_KEY);
-
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed
-      .map((item) => normalizeSessao(item))
-      .filter((item): item is SessaoTreino => item !== null);
-  } catch {
-    return [];
-  }
-}
-
-export function saveSessoesToStorage(sessoes: SessaoTreino[]) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.setItem(SESSOES_STORAGE_KEY, JSON.stringify(sessoes));
 }
 
 export function formatDateTime(value: string | null) {
