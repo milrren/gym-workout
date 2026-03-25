@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthButton from "@/components/AuthButton";
 
 export default function Home() {
   return (
@@ -8,9 +9,12 @@ export default function Home() {
 
       <main className="relative mx-auto flex w-full max-w-5xl flex-col gap-10">
         <section className="rounded-3xl border border-black/10 bg-white/80 p-8 shadow-lg backdrop-blur sm:p-10">
-          <p className="mb-4 inline-flex rounded-full border border-black/15 px-3 py-1 text-xs font-semibold tracking-[0.18em] uppercase">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <p className="inline-flex rounded-full border border-black/15 px-3 py-1 text-xs font-semibold tracking-[0.18em] uppercase">
             Gym Workout
-          </p>
+            </p>
+            <AuthButton />
+          </div>
           <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-[var(--text-primary)] sm:text-5xl">
             Organize sua rotina de treino em um unico lugar.
           </h1>
