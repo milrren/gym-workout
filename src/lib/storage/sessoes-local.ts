@@ -18,7 +18,11 @@ function readAll(): SessaoTreino[] {
 }
 
 function writeAll(sessoes: SessaoTreino[]) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessoes));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessoes));
+  } catch (error) {
+    console.error("Falha ao salvar sessoes no localStorage", error);
+  }
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
 }
 

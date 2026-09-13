@@ -17,7 +17,11 @@ function readAll(): Ficha[] {
 }
 
 function writeAll(fichas: Ficha[]) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fichas));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fichas));
+  } catch (error) {
+    console.error("Falha ao salvar fichas no localStorage", error);
+  }
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
 }
 
@@ -87,7 +91,11 @@ export function upsertFichaSemEvento(ficha: Ficha) {
     fichas[index] = ficha;
   }
 
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fichas));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fichas));
+  } catch (error) {
+    console.error("Falha ao salvar fichas no localStorage", error);
+  }
 }
 
 export const FICHAS_CHANGE_EVENT = CHANGE_EVENT;

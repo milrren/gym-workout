@@ -16,7 +16,14 @@ export default function FichasSyncManager() {
       return;
     }
 
-    if (localStorage.getItem(LAST_SYNC_USER_KEY) === session.user.id) {
+    let jaSincronizado = false;
+    try {
+      jaSincronizado = localStorage.getItem(LAST_SYNC_USER_KEY) === session.user.id;
+    } catch (error) {
+      console.error("Falha ao acessar localStorage", error);
+    }
+
+    if (jaSincronizado) {
       return;
     }
 
@@ -24,7 +31,11 @@ export default function FichasSyncManager() {
 
     pullAndMergeFichas()
       .then(() => {
-        localStorage.setItem(LAST_SYNC_USER_KEY, session.user.id);
+        try {
+          localStorage.setItem(LAST_SYNC_USER_KEY, session.user.id);
+        } catch (error) {
+          console.error("Falha ao acessar localStorage", error);
+        }
       })
       .catch(() => {
         syncingRef.current = false;
