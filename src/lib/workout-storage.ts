@@ -10,6 +10,8 @@ export type Ficha = {
   nome: string;
   exercicios: Exercicio[];
   descanso: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type SessaoTreino = {
@@ -20,6 +22,10 @@ export type SessaoTreino = {
   exerciciosConcluidosIds: string[];
   startedAt: string;
   endedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** Local-only: quando a sessão foi enviada ao servidor pela última vez (nunca enviado ao backend). */
+  syncedAt: string | null;
 };
 
 export function createId(prefix: string) {
@@ -104,11 +110,15 @@ export function normalizeFicha(input: unknown): Ficha | null {
     .map((item) => normalizeExercicio(item))
     .filter((item): item is Exercicio => item !== null);
 
+  const now = new Date().toISOString();
+
   return {
     id: typeof candidate.id === "string" && candidate.id ? candidate.id : createId("ficha"),
     nome,
     descanso,
     exercicios,
+    createdAt: typeof candidate.createdAt === "string" && candidate.createdAt ? candidate.createdAt : now,
+    updatedAt: typeof candidate.updatedAt === "string" && candidate.updatedAt ? candidate.updatedAt : now,
   };
 }
 

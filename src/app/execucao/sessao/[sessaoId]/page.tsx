@@ -4,28 +4,25 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { formatDateTime, SessaoTreino } from "@/lib/workout-storage";
+import { getSessao, updateSessao } from "@/lib/storage/sessoes-local";
 
 export default function SessaoPage() {
   const params = useParams<{ sessaoId: string }>();
   const sessaoId = params.sessaoId;
 
   const [sessao, setSessao] = useState<SessaoTreino | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [carregado, setCarregado] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/sessoes/${sessaoId}`)
-      .then((res) => {
-        if (res.status === 404) {
-          setNotFound(true);
-          return null;
-        }
-        return res.json() as Promise<SessaoTreino>;
-      })
-      .then((data) => {
-        if (data) setSessao(data);
-      })
-      .catch(() => setNotFound(true));
+    function carregar() {
+      setSessao(getSessao(sessaoId));
+      setCarregado(true);
+    }
+
+    carregar();
   }, [sessaoId]);
+
+  const notFound = carregado && sessao === null;
 
   const exerciciosExecutados = useMemo(() => {
     if (!sessao) {
@@ -37,18 +34,15 @@ export default function SessaoPage() {
     );
   }, [sessao]);
 
-  function atualizarSessao(updated: SessaoTreino) {
-    fetch(`/api/sessoes/${updated.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        exerciciosConcluidosIds: updated.exerciciosConcluidosIds,
-        endedAt: updated.endedAt,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => setSessao(data as SessaoTreino))
-      .catch(() => {});
+  function atualizarSessao(data: Partial<Pick<SessaoTreino, "exerciciosConcluidosIds" | "endedAt">>) {
+    if (!sessao) {
+      return;
+    }
+
+    const atualizada = updateSessao(sessao.id, data);
+    if (atualizada) {
+      setSessao(atualizada);
+    }
   }
 
   function alternarExercicioConcluido(exercicioId: string) {
@@ -61,10 +55,7 @@ export default function SessaoPage() {
       ? sessao.exerciciosConcluidosIds.filter((id) => id !== exercicioId)
       : [...sessao.exerciciosConcluidosIds, exercicioId];
 
-    atualizarSessao({
-      ...sessao,
-      exerciciosConcluidosIds,
-    });
+    atualizarSessao({ exerciciosConcluidosIds });
   }
 
   function concluirSessao() {
@@ -72,11 +63,9 @@ export default function SessaoPage() {
       return;
     }
 
-    atualizarSessao({
-      ...sessao,
-      endedAt: new Date().toISOString(),
-    });
+    atualizarSessao({ endedAt: new Date().toISOString() });
   }
+
 
   if (notFound) {
     return (

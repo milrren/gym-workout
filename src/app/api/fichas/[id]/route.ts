@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveIdentity } from "@/lib/identity";
-import { updateFicha, deleteFicha } from "@/lib/db/fichas";
+import { resolveUserId } from "@/lib/identity";
+import { upsertFicha, deleteFicha } from "@/lib/db/fichas";
 import { normalizeFicha } from "@/lib/workout-storage";
 
 export async function PUT(
@@ -9,23 +9,19 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const { userId } = await resolveIdentity();
+    const userId = await resolveUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
     const body = await request.json() as unknown;
-    const data = normalizeFicha(body);
+    const data = normalizeFicha({ ...(body as object), id });
 
     if (!data) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
-    const ficha = await updateFicha(userId, id, {
-      nome: data.nome,
-      exercicios: data.exercicios,
-      descanso: data.descanso,
-    });
-
-    if (!ficha) {
-      return NextResponse.json({ error: "Ficha não encontrada" }, { status: 404 });
-    }
+    const ficha = await upsertFicha(userId, data);
 
     return NextResponse.json(ficha);
   } catch {
@@ -39,7 +35,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const { userId } = await resolveIdentity();
+    const userId = await resolveUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
     const deleted = await deleteFicha(userId, id);
 
     if (!deleted) {

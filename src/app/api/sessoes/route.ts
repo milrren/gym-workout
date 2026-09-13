@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveIdentity } from "@/lib/identity";
-import { getSessoes, createSessao } from "@/lib/db/sessoes";
-import { getFichas } from "@/lib/db/fichas";
+import { resolveUserId } from "@/lib/identity";
+import { getSessoes, upsertSessao } from "@/lib/db/sessoes";
+import { SessaoTreino } from "@/lib/workout-storage";
 
 export async function GET() {
   try {
-    const { userId } = await resolveIdentity();
+    const userId = await resolveUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
     const sessoes = await getSessoes(userId);
     return NextResponse.json(sessoes);
   } catch {
@@ -13,27 +17,40 @@ export async function GET() {
   }
 }
 
+/** Recebe uma sessão já criada/finalizada localmente e faz upsert no servidor (sync sob demanda). */
 export async function POST(request: NextRequest) {
   try {
-    const { userId, isAnonymous } = await resolveIdentity();
-    const body = await request.json() as { fichaId?: unknown };
-
-    if (!body.fichaId || typeof body.fichaId !== "string") {
-      return NextResponse.json({ error: "fichaId é obrigatório" }, { status: 400 });
+    const userId = await resolveUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    // Look up the ficha server-side to ensure the exercicios are authoritative
-    const fichas = await getFichas(userId);
-    const ficha = fichas.find((f) => f.id === body.fichaId);
+    const body = await request.json() as Partial<SessaoTreino>;
 
-    if (!ficha) {
-      return NextResponse.json({ error: "Ficha não encontrada" }, { status: 404 });
+    if (
+      typeof body.id !== "string" ||
+      typeof body.fichaId !== "string" ||
+      typeof body.fichaNome !== "string" ||
+      !Array.isArray(body.exercicios) ||
+      !Array.isArray(body.exerciciosConcluidosIds) ||
+      typeof body.startedAt !== "string" ||
+      typeof body.createdAt !== "string" ||
+      typeof body.updatedAt !== "string"
+    ) {
+      return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
-    const sessao = await createSessao(userId, isAnonymous, {
-      fichaId: ficha.id,
-      fichaNome: ficha.nome,
-      exercicios: ficha.exercicios,
+    const sessao = await upsertSessao(userId, {
+      id: body.id,
+      fichaId: body.fichaId,
+      fichaNome: body.fichaNome,
+      exercicios: body.exercicios,
+      exerciciosConcluidosIds: body.exerciciosConcluidosIds,
+      startedAt: body.startedAt,
+      endedAt: body.endedAt ?? null,
+      createdAt: body.createdAt,
+      updatedAt: body.updatedAt,
+      syncedAt: null,
     });
 
     return NextResponse.json(sessao, { status: 201 });

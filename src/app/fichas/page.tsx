@@ -2,20 +2,16 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-
-type Exercicio = {
-  id: string;
-  descricao: string;
-  series: number;
-  pesoSugerido: number | null;
-};
-
-type Ficha = {
-  id: string;
-  nome: string;
-  exercicios: Exercicio[];
-  descanso: number;
-};
+import { useSession } from "next-auth/react";
+import { Exercicio, Ficha } from "@/lib/workout-storage";
+import {
+  listFichas,
+  createFicha as createFichaLocal,
+  updateFicha as updateFichaLocal,
+  deleteFicha as deleteFichaLocal,
+  FICHAS_CHANGE_EVENT,
+} from "@/lib/storage/fichas-local";
+import { pushFicha, pushDeleteFicha } from "@/lib/sync/fichas-sync";
 
 type FormState = {
   nome: string;
@@ -48,6 +44,8 @@ function createId() {
 }
 
 export default function FichasPage() {
+  const { status } = useSession();
+  const autenticado = status === "authenticated";
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [exerciciosCadastro, setExerciciosCadastro] = useState<Exercicio[]>([]);
@@ -56,14 +54,15 @@ export default function FichasPage() {
   const [exercicioDraft, setExercicioDraft] = useState<ExercicioDraft>(INITIAL_EXERCICIO_DRAFT);
   const [error, setError] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/fichas")
-      .then((res) => res.json())
-      .then((data) => setFichas(data as Ficha[]))
-      .catch(() => setFichas([]))
-      .finally(() => setLoading(false));
+    function carregar() {
+      setFichas(listFichas());
+    }
+
+    carregar();
+    window.addEventListener(FICHAS_CHANGE_EVENT, carregar);
+    return () => window.removeEventListener(FICHAS_CHANGE_EVENT, carregar);
   }, []);
 
   const totalExercicios = useMemo(
@@ -102,29 +101,12 @@ export default function FichasPage() {
 
     const payload = { nome, exercicios: exerciciosCadastro, descanso };
 
-    if (fichaEmEdicaoId) {
-      const editingId = fichaEmEdicaoId;
-      fetch(`/api/fichas/${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
-        .then((res) => res.json())
-        .then((updated) =>
-          setFichas((current) =>
-            current.map((f) => (f.id === editingId ? (updated as Ficha) : f)),
-          ),
-        )
-        .catch(() => setError("Erro ao salvar ficha."));
-    } else {
-      fetch("/api/fichas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
-        .then((res) => res.json())
-        .then((created) => setFichas((current) => [created as Ficha, ...current]))
-        .catch(() => setError("Erro ao cadastrar ficha."));
+    const ficha = fichaEmEdicaoId
+      ? updateFichaLocal(fichaEmEdicaoId, payload)
+      : createFichaLocal(payload);
+
+    if (ficha && autenticado) {
+      pushFicha(ficha);
     }
 
     resetFormulario();
@@ -182,18 +164,15 @@ export default function FichasPage() {
   }
 
   function removerFicha(id: string) {
-    setFichas((current) => current.filter((ficha) => ficha.id !== id));
+    const removida = deleteFichaLocal(id);
 
     if (fichaEmEdicaoId === id) {
       resetFormulario();
     }
 
-    fetch(`/api/fichas/${id}`, { method: "DELETE" }).catch(() => {
-      // Re-fetch to restore state if delete failed
-      fetch("/api/fichas")
-        .then((res) => res.json())
-        .then((data) => setFichas(data as Ficha[]));
-    });
+    if (removida && autenticado) {
+      pushDeleteFicha(id);
+    }
   }
 
   function iniciarEdicaoFicha(ficha: Ficha) {
@@ -222,8 +201,8 @@ export default function FichasPage() {
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base">
             Cadastre fichas com ID, nome, exercicios e descanso entre series. Os dados ficam
-            salvos no cache do navegador por enquanto, prontos para futura migracao para MongoDB
-            via funcoes serverless.
+            salvos no seu dispositivo e, quando voce estiver logado, sao sincronizados
+            automaticamente com sua conta.
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -231,7 +210,7 @@ export default function FichasPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                 Fichas
               </p>
-              <p className="mt-2 text-3xl font-bold text-[var(--text-primary)]">{loading ? "—" : fichas.length}</p>
+              <p className="mt-2 text-3xl font-bold text-[var(--text-primary)]">{fichas.length}</p>
             </article>
             <article className="rounded-2xl border border-black/10 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
@@ -243,10 +222,13 @@ export default function FichasPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                 Persistencia
               </p>
-              <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">MongoDB</p>
+              <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
+                {autenticado ? "Local + sincronizado" : "Local (faca login para sincronizar)"}
+              </p>
             </article>
           </div>
         </header>
+
 
         <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <form

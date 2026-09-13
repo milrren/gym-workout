@@ -3,30 +3,42 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { formatDateTime, SessaoTreino } from "@/lib/workout-storage";
-
-type Ficha = {
-  id: string;
-  nome: string;
-  exercicios: { id: string; descricao: string; series: number; pesoSugerido: number | null }[];
-  descanso: number;
-};
+import { useSession } from "next-auth/react";
+import { formatDateTime, Ficha, SessaoTreino } from "@/lib/workout-storage";
+import { listFichas, FICHAS_CHANGE_EVENT } from "@/lib/storage/fichas-local";
+import {
+  listSessoes,
+  createSessao as createSessaoLocal,
+  SESSOES_CHANGE_EVENT,
+} from "@/lib/storage/sessoes-local";
+import { syncAllSessoes } from "@/lib/sync/sessoes-sync";
 
 export default function ExecucaoPage() {
   const router = useRouter();
+  const { status } = useSession();
+  const autenticado = status === "authenticated";
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [sessoes, setSessoes] = useState<SessaoTreino[]>([]);
+  const [sincronizando, setSincronizando] = useState(false);
+  const [syncMensagem, setSyncMensagem] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/fichas").then((r) => r.json()),
-      fetch("/api/sessoes").then((r) => r.json()),
-    ])
-      .then(([fichasData, sessoesData]) => {
-        setFichas(fichasData as Ficha[]);
-        setSessoes(sessoesData as SessaoTreino[]);
-      })
-      .catch(() => {});
+    function carregarFichas() {
+      setFichas(listFichas());
+    }
+
+    function carregarSessoes() {
+      setSessoes(listSessoes());
+    }
+
+    carregarFichas();
+    carregarSessoes();
+    window.addEventListener(FICHAS_CHANGE_EVENT, carregarFichas);
+    window.addEventListener(SESSOES_CHANGE_EVENT, carregarSessoes);
+    return () => {
+      window.removeEventListener(FICHAS_CHANGE_EVENT, carregarFichas);
+      window.removeEventListener(SESSOES_CHANGE_EVENT, carregarSessoes);
+    };
   }, []);
 
   const sessoesFinalizadas = useMemo(
@@ -35,16 +47,29 @@ export default function ExecucaoPage() {
   );
 
   function iniciarSessao(fichaId: string) {
-    fetch("/api/sessoes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fichaId }),
-    })
-      .then((res) => res.json())
-      .then((novaSessao) => {
-        router.push(`/execucao/sessao/${(novaSessao as SessaoTreino).id}`);
+    const ficha = fichas.find((f) => f.id === fichaId);
+
+    if (!ficha) {
+      return;
+    }
+
+    const sessao = createSessaoLocal(ficha);
+    router.push(`/execucao/sessao/${sessao.id}`);
+  }
+
+  function sincronizarSessoes() {
+    setSincronizando(true);
+    setSyncMensagem(null);
+
+    syncAllSessoes()
+      .then(({ sucesso, falhas }) => {
+        setSyncMensagem(
+          falhas > 0
+            ? `${sucesso} sessao(oes) sincronizada(s), ${falhas} falharam.`
+            : `${sucesso} sessao(oes) sincronizada(s) com sucesso.`,
+        );
       })
-      .catch(() => {});
+      .finally(() => setSincronizando(false));
   }
 
   return (
@@ -63,9 +88,27 @@ export default function ExecucaoPage() {
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base">
             Inicie uma sessao de treino a partir de uma ficha para acompanhar os exercicios
-            executados e gerar um relatorio com horario de inicio e fim.
+            executados e gerar um relatorio com horario de inicio e fim. As sessoes ficam salvas
+            apenas no seu dispositivo ate que voce peca a sincronizacao.
           </p>
+
+          {autenticado ? (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={sincronizarSessoes}
+                disabled={sincronizando}
+                className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
+              >
+                {sincronizando ? "Sincronizando..." : "Sincronizar sessoes"}
+              </button>
+              {syncMensagem ? (
+                <p className="text-sm text-[var(--text-secondary)]">{syncMensagem}</p>
+              ) : null}
+            </div>
+          ) : null}
         </header>
+
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
           <article className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm">

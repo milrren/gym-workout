@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
-import MigrationTrigger from "@/components/MigrationTrigger";
+import FichasSyncManager from "@/components/FichasSyncManager";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,7 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionProvider>
-          <MigrationTrigger />
+          <FichasSyncManager />
           {children}
         </SessionProvider>
       </body>
