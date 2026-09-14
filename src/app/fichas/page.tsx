@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Exercicio, Ficha } from "@/lib/workout-storage";
 import {
@@ -12,6 +12,7 @@ import {
   FICHAS_CHANGE_EVENT,
 } from "@/lib/storage/fichas-local";
 import { pushFicha, pushDeleteFicha } from "@/lib/sync/fichas-sync";
+import { downloadFichasJson, parseFichasFromJson } from "@/lib/fichas-import-export";
 
 type FormState = {
   nome: string;
@@ -54,6 +55,11 @@ export default function FichasPage() {
   const [exercicioDraft, setExercicioDraft] = useState<ExercicioDraft>(INITIAL_EXERCICIO_DRAFT);
   const [error, setError] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [importFeedback, setImportFeedback] = useState<{
+    tipo: "sucesso" | "erro";
+    texto: string;
+  } | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     function carregar() {
@@ -185,6 +191,53 @@ export default function FichasPage() {
     setError(null);
   }
 
+  function exportarFichas() {
+    downloadFichasJson(fichas);
+  }
+
+  function abrirSeletorImportacao() {
+    importInputRef.current?.click();
+  }
+
+  async function importarFichas(event: ChangeEvent<HTMLInputElement>) {
+    const arquivo = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!arquivo) {
+      return;
+    }
+
+    try {
+      const texto = await arquivo.text();
+      const { fichas: importadas, invalidCount } = parseFichasFromJson(texto);
+
+      if (!importadas.length) {
+        setImportFeedback({ tipo: "erro", texto: "Nenhuma ficha valida encontrada no arquivo." });
+        return;
+      }
+
+      for (const ficha of importadas) {
+        const criada = createFichaLocal({
+          nome: ficha.nome,
+          exercicios: ficha.exercicios,
+          descanso: ficha.descanso,
+        });
+
+        if (criada && autenticado) {
+          pushFicha(criada);
+        }
+      }
+
+      const sufixo = invalidCount ? `, ${invalidCount} invalida(s) ignorada(s)` : "";
+      setImportFeedback({
+        tipo: "sucesso",
+        texto: `${importadas.length} ficha(s) importada(s)${sufixo}.`,
+      });
+    } catch {
+      setImportFeedback({ tipo: "erro", texto: "Arquivo JSON invalido." });
+    }
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-6 py-10 sm:px-10">
       <div className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-[var(--surface-spot)] blur-3xl" />
@@ -226,6 +279,39 @@ export default function FichasPage() {
                 {autenticado ? "Local + sincronizado" : "Local (faca login para sincronizar)"}
               </p>
             </article>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={exportarFichas}
+              className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+            >
+              Exportar fichas (JSON)
+            </button>
+            <button
+              type="button"
+              onClick={abrirSeletorImportacao}
+              className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+            >
+              Importar fichas (JSON)
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".json,application/json"
+              hidden
+              onChange={importarFichas}
+            />
+            {importFeedback ? (
+              <p
+                className={`text-xs font-semibold ${
+                  importFeedback.tipo === "sucesso" ? "text-emerald-600" : "text-red-600"
+                }`}
+              >
+                {importFeedback.texto}
+              </p>
+            ) : null}
           </div>
         </header>
 

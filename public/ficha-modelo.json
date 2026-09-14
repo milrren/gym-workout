@@ -1,0 +1,11 @@
+[
+  {
+    "nome": "Treino A - Peito e Triceps",
+    "descanso": 60,
+    "exercicios": [
+      { "descricao": "Supino reto", "series": 4, "pesoSugerido": 40 },
+      { "descricao": "Crucifixo", "series": 3, "pesoSugerido": 12 },
+      { "descricao": "Triceps corda", "series": 4, "pesoSugerido": 20 }
+    ]
+  }
+]

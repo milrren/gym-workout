@@ -22,6 +22,13 @@ export default function Home() {
             Cadastre fichas, acompanhe a execucao dos exercicios e controle o descanso entre series.
             O modulo de Fichas ja esta disponivel.
           </p>
+          <a
+            href="/ficha-modelo.json"
+            download
+            className="mt-4 inline-flex items-center text-sm font-semibold text-[var(--accent)] hover:underline"
+          >
+            Baixar modelo de ficha (JSON)
+          </a>
         </section>
 
         <section className="grid gap-5 md:grid-cols-3">
