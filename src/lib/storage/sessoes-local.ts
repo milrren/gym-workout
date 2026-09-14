@@ -4,6 +4,34 @@ import type { Ficha } from "@/lib/workout-storage";
 const STORAGE_KEY = "gym-workout:sessoes";
 const CHANGE_EVENT = "gym-workout:sessoes-changed";
 
+function normalizeSessao(input: unknown): SessaoTreino | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  const candidate = input as Partial<SessaoTreino>;
+  const now = new Date().toISOString();
+
+  if (typeof candidate.id !== "string" || typeof candidate.fichaId !== "string") {
+    return null;
+  }
+
+  return {
+    id: candidate.id,
+    fichaId: candidate.fichaId,
+    fichaNome: typeof candidate.fichaNome === "string" ? candidate.fichaNome : "",
+    exercicios: Array.isArray(candidate.exercicios) ? candidate.exercicios : [],
+    exerciciosConcluidosIds: Array.isArray(candidate.exerciciosConcluidosIds)
+      ? candidate.exerciciosConcluidosIds
+      : [],
+    startedAt: typeof candidate.startedAt === "string" ? candidate.startedAt : now,
+    endedAt: typeof candidate.endedAt === "string" ? candidate.endedAt : null,
+    createdAt: typeof candidate.createdAt === "string" ? candidate.createdAt : now,
+    updatedAt: typeof candidate.updatedAt === "string" ? candidate.updatedAt : now,
+    syncedAt: typeof candidate.syncedAt === "string" ? candidate.syncedAt : null,
+  };
+}
+
 function readAll(): SessaoTreino[] {
   if (typeof window === "undefined") {
     return [];
@@ -11,7 +39,11 @@ function readAll(): SessaoTreino[] {
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as SessaoTreino[]) : [];
+    const parsed = raw ? (JSON.parse(raw) as unknown[]) : [];
+    // Sanea entradas antigas/corrompidas (ex.: sem startedAt) para evitar crash no sort.
+    return parsed
+      .map((item) => normalizeSessao(item))
+      .filter((item): item is SessaoTreino => item !== null);
   } catch {
     return [];
   }
@@ -27,7 +59,7 @@ function writeAll(sessoes: SessaoTreino[]) {
 }
 
 export function listSessoes(): SessaoTreino[] {
-  return readAll().sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  return readAll().sort((a, b) => (b.startedAt ?? "").localeCompare(a.startedAt ?? ""));
 }
 
 export function getSessao(id: string): SessaoTreino | null {

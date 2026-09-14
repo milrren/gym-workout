@@ -1,4 +1,4 @@
-import { createId, Ficha } from "@/lib/workout-storage";
+import { createId, Ficha, normalizeFicha } from "@/lib/workout-storage";
 
 const STORAGE_KEY = "gym-workout:fichas";
 const CHANGE_EVENT = "gym-workout:fichas-changed";
@@ -10,7 +10,11 @@ function readAll(): Ficha[] {
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Ficha[]) : [];
+    const parsed = raw ? (JSON.parse(raw) as unknown[]) : [];
+    // Sanea entradas antigas/corrompidas (ex.: sem createdAt/updatedAt) para evitar crash no sort.
+    return parsed
+      .map((item) => normalizeFicha(item))
+      .filter((item): item is Ficha => item !== null);
   } catch {
     return [];
   }
@@ -26,7 +30,7 @@ function writeAll(fichas: Ficha[]) {
 }
 
 export function listFichas(): Ficha[] {
-  return readAll().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return readAll().sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
 }
 
 export function createFicha(data: Pick<Ficha, "nome" | "exercicios" | "descanso">): Ficha {
