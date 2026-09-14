@@ -69,9 +69,9 @@ export default function SessaoPage() {
 
   if (notFound) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-6 py-10 sm:px-10">
-        <main className="mx-auto w-full max-w-3xl rounded-3xl border border-black/10 bg-white p-8 shadow-sm">
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Sessao nao encontrada</h1>
+      <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-10">
+        <main className="mx-auto w-full max-w-3xl rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:rounded-3xl sm:p-8">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] sm:text-2xl">Sessao nao encontrada</h1>
           <p className="mt-3 text-sm text-[var(--text-secondary)]">
             A sessao informada nao existe ou foi removida.
           </p>
@@ -97,11 +97,11 @@ export default function SessaoPage() {
 
   if (sessao.endedAt) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-6 py-10 sm:px-10">
-        <div className="pointer-events-none absolute -top-16 right-10 h-64 w-64 rounded-full bg-[var(--surface-spot-secondary)] blur-3xl" />
+      <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-10">
+        <div className="pointer-events-none absolute -top-16 right-10 hidden h-64 w-64 rounded-full bg-[var(--surface-spot-secondary)] blur-3xl sm:block" />
         <main className="relative mx-auto w-full max-w-4xl">
-          <section className="rounded-3xl border border-black/10 bg-[#fff9e5] p-6 shadow-sm">
-            <h1 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
+          <section className="rounded-2xl border border-black/10 bg-[#fff9e5] p-4 shadow-sm sm:rounded-3xl sm:p-6">
+            <h1 className="text-xl font-bold text-[var(--text-primary)] sm:text-2xl md:text-3xl">
               Relatorio da sessao
             </h1>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
@@ -115,19 +115,19 @@ export default function SessaoPage() {
             </p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <article className="rounded-2xl border border-black/10 bg-white p-4">
+              <article className="rounded-2xl border border-black/10 bg-white p-3 sm:p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                   Executados
                 </p>
-                <p className="mt-2 text-3xl font-bold text-[var(--text-primary)]">
+                <p className="mt-2 text-xl font-bold text-[var(--text-primary)] sm:text-2xl md:text-3xl">
                   {sessao.exerciciosConcluidosIds.length}
                 </p>
               </article>
-              <article className="rounded-2xl border border-black/10 bg-white p-4">
+              <article className="rounded-2xl border border-black/10 bg-white p-3 sm:p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                   Total
                 </p>
-                <p className="mt-2 text-3xl font-bold text-[var(--text-primary)]">
+                <p className="mt-2 text-xl font-bold text-[var(--text-primary)] sm:text-2xl md:text-3xl">
                   {sessao.exercicios.length}
                 </p>
               </article>
@@ -159,17 +159,17 @@ export default function SessaoPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-6 py-10 sm:px-10">
-      <div className="pointer-events-none absolute -top-16 right-10 h-64 w-64 rounded-full bg-[var(--surface-spot-secondary)] blur-3xl" />
-      <main className="relative mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <header className="rounded-3xl border border-black/10 bg-white/90 p-7 shadow-lg backdrop-blur sm:p-8">
+    <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-10">
+      <div className="pointer-events-none absolute -top-16 right-10 hidden h-64 w-64 rounded-full bg-[var(--surface-spot-secondary)] blur-3xl sm:block" />
+      <main className="relative mx-auto flex w-full max-w-5xl flex-col gap-4 sm:gap-6">
+        <header className="rounded-2xl border border-black/10 bg-white/90 p-4 shadow-lg backdrop-blur sm:rounded-3xl sm:p-6 md:p-8">
           <Link
             href="/execucao"
             className="text-sm font-semibold text-[var(--accent)] transition hover:underline"
           >
             Voltar para modulo de execucao
           </Link>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl md:text-4xl">
             Sessao de treino
           </h1>
           <p className="mt-2 text-sm text-[var(--text-secondary)]">
@@ -190,7 +190,7 @@ export default function SessaoPage() {
           </p>
         </header>
 
-        <section className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6">
           <h2 className="text-xl font-bold text-[var(--text-primary)]">Exercicios da sessao</h2>
           {sessao.exercicios.length === 0 ? (
             <p className="mt-4 rounded-2xl border border-dashed border-black/20 bg-[var(--surface-soft)] p-4 text-sm text-[var(--text-secondary)]">
@@ -204,7 +204,7 @@ export default function SessaoPage() {
                 return (
                   <li
                     key={exercicio.id}
-                    className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${
+                    className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
                       concluido ? "border-green-200 bg-green-50" : "border-black/10 bg-[var(--surface-soft)]"
                     }`}
                   >
@@ -220,13 +220,16 @@ export default function SessaoPage() {
                     <button
                       type="button"
                       onClick={() => alternarExercicioConcluido(exercicio.id)}
-                      className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                      className={`w-full shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition sm:w-auto sm:py-2 ${
                         concluido
                           ? "bg-green-600 text-white hover:brightness-95"
                           : "border border-black/15 bg-white text-[var(--text-primary)] hover:bg-black/5"
                       }`}
                     >
-                      {concluido ? "Concluido" : "Marcar como concluido"}
+                      <span className="sm:hidden">{concluido ? "Concluido" : "Concluir"}</span>
+                      <span className="hidden sm:inline">
+                        {concluido ? "Concluido" : "Marcar como concluido"}
+                      </span>
                     </button>
                   </li>
                 );

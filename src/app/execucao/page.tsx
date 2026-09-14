@@ -73,17 +73,17 @@ export default function ExecucaoPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-6 py-10 sm:px-10">
-      <div className="pointer-events-none absolute -top-24 -left-10 h-72 w-72 rounded-full bg-[var(--surface-spot)] blur-3xl" />
-      <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <header className="rounded-3xl border border-black/10 bg-white/85 p-7 shadow-lg backdrop-blur sm:p-8">
+    <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-10">
+      <div className="pointer-events-none absolute -top-24 -left-10 hidden h-72 w-72 rounded-full bg-[var(--surface-spot)] blur-3xl sm:block" />
+      <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-5 sm:gap-6 md:gap-8">
+        <header className="rounded-2xl border border-black/10 bg-white/85 p-4 shadow-lg backdrop-blur sm:rounded-3xl sm:p-6 md:p-8">
           <Link
             href="/"
             className="text-sm font-semibold text-[var(--accent)] transition hover:underline"
           >
             Voltar para inicio
           </Link>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl md:text-4xl">
             Modulo de Execucao
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base">
@@ -110,8 +110,8 @@ export default function ExecucaoPage() {
         </header>
 
 
-        <section className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
-          <article className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm">
+        <section className="grid gap-4 sm:gap-5 md:gap-6 lg:grid-cols-[1.1fr_1fr]">
+          <article className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6">
             <h2 className="text-xl font-bold text-[var(--text-primary)]">Iniciar sessao</h2>
 
             {fichas.length === 0 ? (
@@ -124,7 +124,7 @@ export default function ExecucaoPage() {
                 {fichas.map((ficha) => (
                   <li
                     key={ficha.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-[var(--surface-soft)] p-4"
+                    className="flex flex-col gap-3 rounded-2xl border border-black/10 bg-[var(--surface-soft)] p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
@@ -140,7 +140,7 @@ export default function ExecucaoPage() {
                     <button
                       type="button"
                       onClick={() => iniciarSessao(ficha.id)}
-                      className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-95"
+                      className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95 sm:py-2"
                     >
                       Iniciar sessao
                     </button>
@@ -150,7 +150,7 @@ export default function ExecucaoPage() {
             )}
           </article>
 
-          <article className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm">
+          <article className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6">
             <h2 className="text-xl font-bold text-[var(--text-primary)]">Sessoes finalizadas</h2>
 
             {sessoesFinalizadas.length === 0 ? (

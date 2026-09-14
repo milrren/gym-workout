@@ -239,17 +239,17 @@ export default function FichasPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-6 py-10 sm:px-10">
-      <div className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-[var(--surface-spot)] blur-3xl" />
-      <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <header className="rounded-3xl border border-black/10 bg-white/85 p-7 shadow-lg backdrop-blur sm:p-8">
+    <div className="relative min-h-screen overflow-hidden bg-[var(--surface-main)] px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-10">
+      <div className="pointer-events-none absolute -top-24 -right-16 hidden h-72 w-72 rounded-full bg-[var(--surface-spot)] blur-3xl sm:block" />
+      <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-5 sm:gap-6 md:gap-8">
+        <header className="rounded-2xl border border-black/10 bg-white/85 p-4 shadow-lg backdrop-blur sm:rounded-3xl sm:p-6 md:p-8">
           <Link
             href="/"
             className="text-sm font-semibold text-[var(--accent)] transition hover:underline"
           >
             Voltar para inicio
           </Link>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl md:text-4xl">
             Modulo de Fichas
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base">
@@ -259,19 +259,19 @@ export default function FichasPage() {
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <article className="rounded-2xl border border-black/10 bg-white p-4">
+            <article className="rounded-2xl border border-black/10 bg-white p-3 sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                 Fichas
               </p>
-              <p className="mt-2 text-3xl font-bold text-[var(--text-primary)]">{fichas.length}</p>
+              <p className="mt-2 text-xl font-bold text-[var(--text-primary)] sm:text-2xl md:text-3xl">{fichas.length}</p>
             </article>
-            <article className="rounded-2xl border border-black/10 bg-white p-4">
+            <article className="rounded-2xl border border-black/10 bg-white p-3 sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                 Exercicios
               </p>
-              <p className="mt-2 text-3xl font-bold text-[var(--text-primary)]">{totalExercicios}</p>
+              <p className="mt-2 text-xl font-bold text-[var(--text-primary)] sm:text-2xl md:text-3xl">{totalExercicios}</p>
             </article>
-            <article className="rounded-2xl border border-black/10 bg-white p-4">
+            <article className="rounded-2xl border border-black/10 bg-white p-3 sm:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
                 Persistencia
               </p>
@@ -285,14 +285,14 @@ export default function FichasPage() {
             <button
               type="button"
               onClick={exportarFichas}
-              className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+              className="rounded-lg border border-black/15 bg-white px-3 py-2 text-xs font-semibold transition hover:bg-black/5 sm:py-1.5"
             >
               Exportar fichas (JSON)
             </button>
             <button
               type="button"
               onClick={abrirSeletorImportacao}
-              className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+              className="rounded-lg border border-black/15 bg-white px-3 py-2 text-xs font-semibold transition hover:bg-black/5 sm:py-1.5"
             >
               Importar fichas (JSON)
             </button>
@@ -316,10 +316,10 @@ export default function FichasPage() {
         </header>
 
 
-        <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
+        <section className="grid gap-4 sm:gap-6 lg:grid-cols-[360px_1fr]">
           <form
             onSubmit={cadastrarFicha}
-            className={`rounded-3xl border border-black/10 p-6 shadow-sm ${
+            className={`rounded-2xl border border-black/10 p-4 shadow-sm sm:rounded-3xl sm:p-6 ${
               fichaEmEdicaoId ? "bg-[#fff7d6]" : "bg-white"
             }`}
           >
@@ -332,7 +332,7 @@ export default function FichasPage() {
               <button
                 type="button"
                 onClick={resetFormulario}
-                className="mt-4 rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+                className="mt-4 rounded-lg border border-black/15 bg-white px-3 py-2 text-xs font-semibold transition hover:bg-black/5 sm:py-1.5"
               >
                 Cancelar edicao
               </button>
@@ -354,7 +354,7 @@ export default function FichasPage() {
                 <button
                   type="button"
                   onClick={abrirModalExercicio}
-                  className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+                  className="rounded-lg border border-black/15 bg-white px-3 py-2 text-xs font-semibold transition hover:bg-black/5 sm:py-1.5"
                 >
                   Adicionar exercicio
                 </button>
@@ -416,7 +416,7 @@ export default function FichasPage() {
             </button>
           </form>
 
-          <div className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6">
             <h2 className="text-xl font-bold text-[var(--text-primary)]">Fichas cadastradas</h2>
 
             {fichas.length === 0 ? (
@@ -438,14 +438,14 @@ export default function FichasPage() {
                         <button
                           type="button"
                           onClick={() => iniciarEdicaoFicha(ficha)}
-                          className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+                          className="rounded-lg border border-black/15 bg-white px-3 py-2 text-xs font-semibold transition hover:bg-black/5 sm:py-1.5"
                         >
                           Editar
                         </button>
                         <button
                           type="button"
                           onClick={() => removerFicha(ficha.id)}
-                          className="rounded-lg border border-black/15 bg-white px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5"
+                          className="rounded-lg border border-black/15 bg-white px-3 py-2 text-xs font-semibold transition hover:bg-black/5 sm:py-1.5"
                         >
                           Remover
                         </button>
@@ -482,7 +482,7 @@ export default function FichasPage() {
 
       {modalAberta ? (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/45 px-4">
-          <div className="w-full max-w-md rounded-3xl border border-black/10 bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-2xl border border-black/10 bg-white p-4 shadow-xl sm:rounded-3xl sm:p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-bold text-[var(--text-primary)]">Adicionar exercicio</h2>
