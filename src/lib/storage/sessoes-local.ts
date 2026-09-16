@@ -1,35 +1,11 @@
-import { createId, SessaoTreino } from "@/lib/workout-storage";
+import { createId, normalizeSessaoTreino, SessaoTreino } from "@/lib/workout-storage";
 import type { Ficha } from "@/lib/workout-storage";
 
 const STORAGE_KEY = "gym-workout:sessoes";
 const CHANGE_EVENT = "gym-workout:sessoes-changed";
 
 function normalizeSessao(input: unknown): SessaoTreino | null {
-  if (!input || typeof input !== "object") {
-    return null;
-  }
-
-  const candidate = input as Partial<SessaoTreino>;
-  const now = new Date().toISOString();
-
-  if (typeof candidate.id !== "string" || typeof candidate.fichaId !== "string") {
-    return null;
-  }
-
-  return {
-    id: candidate.id,
-    fichaId: candidate.fichaId,
-    fichaNome: typeof candidate.fichaNome === "string" ? candidate.fichaNome : "",
-    exercicios: Array.isArray(candidate.exercicios) ? candidate.exercicios : [],
-    exerciciosConcluidosIds: Array.isArray(candidate.exerciciosConcluidosIds)
-      ? candidate.exerciciosConcluidosIds
-      : [],
-    startedAt: typeof candidate.startedAt === "string" ? candidate.startedAt : now,
-    endedAt: typeof candidate.endedAt === "string" ? candidate.endedAt : null,
-    createdAt: typeof candidate.createdAt === "string" ? candidate.createdAt : now,
-    updatedAt: typeof candidate.updatedAt === "string" ? candidate.updatedAt : now,
-    syncedAt: typeof candidate.syncedAt === "string" ? candidate.syncedAt : null,
-  };
+  return normalizeSessaoTreino(input);
 }
 
 function readAll(): SessaoTreino[] {
@@ -74,6 +50,7 @@ export function createSessao(ficha: Ficha): SessaoTreino {
     fichaNome: ficha.nome,
     exercicios: ficha.exercicios,
     exerciciosConcluidosIds: [],
+    exerciciosPuladosIds: [],
     startedAt: now,
     endedAt: null,
     createdAt: now,
@@ -87,7 +64,7 @@ export function createSessao(ficha: Ficha): SessaoTreino {
 
 export function updateSessao(
   id: string,
-  data: Partial<Pick<SessaoTreino, "exerciciosConcluidosIds" | "endedAt">>,
+  data: Partial<Pick<SessaoTreino, "exerciciosConcluidosIds" | "exerciciosPuladosIds" | "endedAt">>,
 ): SessaoTreino | null {
   const sessoes = readAll();
   const index = sessoes.findIndex((s) => s.id === id);

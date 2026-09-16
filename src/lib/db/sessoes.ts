@@ -12,6 +12,7 @@ type SessaoDoc = {
   fichaNome: string;
   exercicios: Exercicio[];
   exerciciosConcluidosIds: string[];
+  exerciciosPuladosIds: string[];
   startedAt: Date;
   endedAt: Date | null;
   createdAt: Date;
@@ -36,7 +37,8 @@ function toSessao(doc: SessaoDoc): SessaoTreino {
     fichaId: doc.fichaId,
     fichaNome: doc.fichaNome,
     exercicios: doc.exercicios,
-    exerciciosConcluidosIds: doc.exerciciosConcluidosIds,
+    exerciciosConcluidosIds: doc.exerciciosConcluidosIds ?? [],
+    exerciciosPuladosIds: doc.exerciciosPuladosIds ?? [],
     startedAt: doc.startedAt.toISOString(),
     endedAt: doc.endedAt ? doc.endedAt.toISOString() : null,
     createdAt: doc.createdAt.toISOString(),
@@ -62,7 +64,8 @@ export async function upsertSessao(userId: string, sessao: SessaoTreino): Promis
     fichaId: sessao.fichaId,
     fichaNome: sessao.fichaNome,
     exercicios: sessao.exercicios,
-    exerciciosConcluidosIds: sessao.exerciciosConcluidosIds,
+    exerciciosConcluidosIds: sessao.exerciciosConcluidosIds ?? [],
+    exerciciosPuladosIds: sessao.exerciciosPuladosIds ?? [],
     startedAt: new Date(sessao.startedAt),
     endedAt: sessao.endedAt ? new Date(sessao.endedAt) : null,
     createdAt: existing ? existing.createdAt : new Date(sessao.createdAt),

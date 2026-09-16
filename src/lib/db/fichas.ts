@@ -11,6 +11,7 @@ type FichaDoc = {
   nome: string;
   exercicios: Exercicio[];
   descanso: number;
+  cor: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -33,6 +34,7 @@ function toFicha(doc: FichaDoc): Ficha {
     nome: doc.nome,
     exercicios: doc.exercicios,
     descanso: doc.descanso,
+    cor: doc.cor || "lime",
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };
@@ -59,6 +61,7 @@ export async function upsertFicha(userId: string, ficha: Ficha): Promise<Ficha> 
     nome: ficha.nome,
     exercicios: ficha.exercicios,
     descanso: ficha.descanso,
+    cor: ficha.cor || "lime",
     createdAt: existing ? existing.createdAt : new Date(ficha.createdAt),
     updatedAt: new Date(ficha.updatedAt),
   };

@@ -1,15 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8faf9;
-  --foreground: #122024;
-  --surface-main: #f8faf9;
-  --surface-soft: #edf5f1;
-  --surface-spot: #ccebd6;
-  --surface-spot-secondary: #f8d8be;
-  --text-primary: #122024;
-  --text-secondary: #45606a;
-  --accent: #198754;
+  --background: #0a120f;
+  --foreground: #eaf8ef;
+  --surface-main: #101b18;
+  --surface-soft: #16221e;
+  --surface-spot: #b7f65d;
+  --surface-spot-secondary: #f6c27a;
+  --text-primary: #edf7f1;
+  --text-secondary: #b6c8c1;
+  --accent: #b7f65d;
+  --border: rgba(255, 255, 255, 0.1);
+  --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.32);
 }
 
 @theme inline {
@@ -19,8 +21,42 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  color-scheme: dark;
+}
+
 body {
-  background: var(--background);
+  background: radial-gradient(circle at top, #111d1a 0%, var(--background) 38%, #070b0a 100%);
   color: var(--foreground);
   font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
 }
+
+* {
+  box-sizing: border-box;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+body .bg-white,
+body .bg-white\/85,
+body .bg-white\/80,
+body .bg-white\/70,
+body [class*="bg-white"] {
+  background-color: var(--surface-soft) !important;
+}
+
+body .border-black\/10,
+body .border-black\/15,
+body .border-black\/20,
+body .border-black\/25,
+body [class*="border-black/"] {
+  border-color: var(--border) !important;
+}
+
+body .text-\[var\(--text-primary\)\],
+body .text-\[var\(--text-secondary\)\] {
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+}
+

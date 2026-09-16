@@ -33,13 +33,14 @@ export function listFichas(): Ficha[] {
   return readAll().sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
 }
 
-export function createFicha(data: Pick<Ficha, "nome" | "exercicios" | "descanso">): Ficha {
+export function createFicha(data: Pick<Ficha, "nome" | "exercicios" | "descanso" | "cor">): Ficha {
   const now = new Date().toISOString();
   const ficha: Ficha = {
     id: createId("ficha"),
     nome: data.nome,
     exercicios: data.exercicios,
     descanso: data.descanso,
+    cor: data.cor || "lime",
     createdAt: now,
     updatedAt: now,
   };
@@ -50,7 +51,7 @@ export function createFicha(data: Pick<Ficha, "nome" | "exercicios" | "descanso"
 
 export function updateFicha(
   id: string,
-  data: Pick<Ficha, "nome" | "exercicios" | "descanso">,
+  data: Pick<Ficha, "nome" | "exercicios" | "descanso" | "cor">,
 ): Ficha | null {
   const fichas = readAll();
   const index = fichas.findIndex((f) => f.id === id);
@@ -64,6 +65,7 @@ export function updateFicha(
     nome: data.nome,
     exercicios: data.exercicios,
     descanso: data.descanso,
+    cor: data.cor || fichas[index].cor || "lime",
     updatedAt: new Date().toISOString(),
   };
 

@@ -17,6 +17,7 @@ import { downloadFichasJson, parseFichasFromJson } from "@/lib/fichas-import-exp
 type FormState = {
   nome: string;
   descanso: string;
+  cor: string;
 };
 
 type ExercicioDraft = {
@@ -28,6 +29,7 @@ type ExercicioDraft = {
 const INITIAL_FORM: FormState = {
   nome: "",
   descanso: "60",
+  cor: "lime",
 };
 
 const INITIAL_EXERCICIO_DRAFT: ExercicioDraft = {
@@ -105,7 +107,7 @@ export default function FichasPage() {
       return;
     }
 
-    const payload = { nome, exercicios: exerciciosCadastro, descanso };
+    const payload = { nome, exercicios: exerciciosCadastro, descanso, cor: form.cor || "lime" };
 
     const ficha = fichaEmEdicaoId
       ? updateFichaLocal(fichaEmEdicaoId, payload)
@@ -159,6 +161,8 @@ export default function FichasPage() {
       descricao,
       series,
       pesoSugerido,
+      grupoMuscular: "Peito",
+      repeticoes: String(series),
     };
 
     setExerciciosCadastro((current) => [...current, novoExercicio]);
@@ -186,6 +190,7 @@ export default function FichasPage() {
     setForm({
       nome: ficha.nome,
       descanso: String(ficha.descanso),
+      cor: ficha.cor || "lime",
     });
     setExerciciosCadastro(ficha.exercicios.map((exercicio) => ({ ...exercicio })));
     setError(null);
@@ -221,6 +226,7 @@ export default function FichasPage() {
           nome: ficha.nome,
           exercicios: ficha.exercicios,
           descanso: ficha.descanso,
+          cor: ficha.cor || "lime",
         });
 
         if (criada && autenticado) {
@@ -391,6 +397,28 @@ export default function FichasPage() {
                   ))}
                 </ul>
               )}
+            </div>
+
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-[var(--text-primary)]">Cor da ficha</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[
+                  { value: "lime", color: "bg-lime-400" },
+                  { value: "purple", color: "bg-violet-400" },
+                  { value: "orange", color: "bg-orange-400" },
+                  { value: "blue", color: "bg-sky-400" },
+                  { value: "pink", color: "bg-pink-400" },
+                  { value: "teal", color: "bg-teal-400" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setForm((current) => ({ ...current, cor: option.value }))}
+                    className={`h-9 w-9 rounded-full border-2 ${option.color} ${form.cor === option.value ? "border-white ring-2 ring-[var(--accent)]" : "border-white/60"}`}
+                    aria-label={`Selecionar cor ${option.value}`}
+                  />
+                ))}
+              </div>
             </div>
 
             <label className="mt-4 block text-sm font-semibold text-[var(--text-primary)]">

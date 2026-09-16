@@ -1,8 +1,25 @@
+export const FICHA_CORES = ["lime", "purple", "orange", "blue", "pink", "teal"] as const;
+export const GRUPOS_MUSCULARES = [
+  "Peito",
+  "Costas",
+  "Pernas",
+  "Ombro",
+  "Bíceps",
+  "Tríceps",
+  "Abdômen",
+  "Glúteos",
+  "Panturrilha",
+  "Cardio",
+] as const;
+
 export type Exercicio = {
   id: string;
   descricao: string;
   series: number;
   pesoSugerido: number | null;
+  grupoMuscular: string;
+  repeticoes: string;
+  descansoSegundos?: number;
 };
 
 export type Ficha = {
@@ -10,6 +27,7 @@ export type Ficha = {
   nome: string;
   exercicios: Exercicio[];
   descanso: number;
+  cor: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -20,6 +38,7 @@ export type SessaoTreino = {
   fichaNome: string;
   exercicios: Exercicio[];
   exerciciosConcluidosIds: string[];
+  exerciciosPuladosIds: string[];
   startedAt: string;
   endedAt: string | null;
   createdAt: string;
@@ -36,6 +55,28 @@ export function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
+function normalizePlanoNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function normalizeGrupoMuscular(value: unknown): string {
+  if (typeof value === "string" && value.trim()) {
+    const texto = value.trim();
+    return GRUPOS_MUSCULARES.includes(texto as (typeof GRUPOS_MUSCULARES)[number]) ? texto : texto;
+  }
+
+  return "Peito";
+}
+
 function normalizeExercicio(input: unknown): Exercicio | null {
   if (typeof input === "string") {
     const descricao = input.trim();
@@ -49,6 +90,8 @@ function normalizeExercicio(input: unknown): Exercicio | null {
       descricao,
       series: 0,
       pesoSugerido: null,
+      grupoMuscular: "Peito",
+      repeticoes: "8-12",
     };
   }
 
@@ -60,6 +103,8 @@ function normalizeExercicio(input: unknown): Exercicio | null {
     descricao?: unknown;
     series?: unknown;
     repeticoes?: unknown;
+    descansoSegundos?: unknown;
+    grupoMuscular?: unknown;
   };
 
   const descricao = typeof candidate.descricao === "string" ? candidate.descricao.trim() : "";
@@ -69,22 +114,34 @@ function normalizeExercicio(input: unknown): Exercicio | null {
   }
 
   const seriesRaw = candidate.series ?? candidate.repeticoes;
-  const series =
-    typeof seriesRaw === "number" && Number.isFinite(seriesRaw)
-      ? seriesRaw
-      : Number(seriesRaw);
+  const seriesValue = normalizePlanoNumber(seriesRaw);
+  const series = seriesValue !== null ? seriesValue : 0;
+  const pesoNumero = normalizePlanoNumber(candidate.pesoSugerido);
+  const repeticoesValue =
+    typeof candidate.repeticoes === "string"
+      ? candidate.repeticoes.trim()
+      : typeof seriesRaw === "string"
+        ? seriesRaw.trim()
+        : Number.isFinite(seriesValue)
+          ? String(seriesValue)
+          : "8-12";
+  const repeticoes = repeticoesValue || "8-12";
+  const descansoSegundos = normalizePlanoNumber(candidate.descansoSegundos);
 
-  const pesoNumero =
-    typeof candidate.pesoSugerido === "number" && Number.isFinite(candidate.pesoSugerido)
-      ? candidate.pesoSugerido
-      : Number(candidate.pesoSugerido);
-
-  return {
+  const exercicio: Exercicio = {
     id: typeof candidate.id === "string" && candidate.id ? candidate.id : createId("exercicio"),
     descricao,
     series: Number.isFinite(series) ? series : 0,
-    pesoSugerido: Number.isFinite(pesoNumero) ? pesoNumero : null,
+    pesoSugerido: pesoNumero,
+    grupoMuscular: normalizeGrupoMuscular(candidate.grupoMuscular),
+    repeticoes,
   };
+
+  if (descansoSegundos !== null && descansoSegundos > 0) {
+    exercicio.descansoSegundos = Math.round(descansoSegundos);
+  }
+
+  return exercicio;
 }
 
 export function normalizeFicha(input: unknown): Ficha | null {
@@ -95,13 +152,14 @@ export function normalizeFicha(input: unknown): Ficha | null {
   const candidate = input as Partial<Ficha> & {
     nome?: unknown;
     descanso?: unknown;
+    cor?: unknown;
     exercicios?: unknown;
   };
 
   const nome = typeof candidate.nome === "string" ? candidate.nome.trim() : "";
-  const descanso = Number(candidate.descanso);
+  const descanso = normalizePlanoNumber(candidate.descanso);
 
-  if (!nome || !Number.isFinite(descanso) || descanso <= 0) {
+  if (!nome || descanso === null || descanso <= 0) {
     return null;
   }
 
@@ -116,9 +174,50 @@ export function normalizeFicha(input: unknown): Ficha | null {
     id: typeof candidate.id === "string" && candidate.id ? candidate.id : createId("ficha"),
     nome,
     descanso,
+    cor: typeof candidate.cor === "string" && candidate.cor.trim() ? candidate.cor.trim() : "lime",
     exercicios,
     createdAt: typeof candidate.createdAt === "string" && candidate.createdAt ? candidate.createdAt : now,
     updatedAt: typeof candidate.updatedAt === "string" && candidate.updatedAt ? candidate.updatedAt : now,
+  };
+}
+
+export function normalizeSessaoTreino(input: unknown): SessaoTreino | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  const candidate = input as Partial<SessaoTreino> & {
+    exercicios?: unknown;
+    exerciciosConcluidosIds?: unknown;
+    exerciciosPuladosIds?: unknown;
+  };
+
+  if (typeof candidate.id !== "string" || typeof candidate.fichaId !== "string") {
+    return null;
+  }
+
+  const exerciciosArray = Array.isArray(candidate.exercicios) ? candidate.exercicios : [];
+  const exercicios = exerciciosArray
+    .map((item) => normalizeExercicio(item))
+    .filter((item): item is Exercicio => item !== null);
+  const now = new Date().toISOString();
+
+  return {
+    id: candidate.id,
+    fichaId: candidate.fichaId,
+    fichaNome: typeof candidate.fichaNome === "string" ? candidate.fichaNome : "",
+    exercicios,
+    exerciciosConcluidosIds: Array.isArray(candidate.exerciciosConcluidosIds)
+      ? candidate.exerciciosConcluidosIds.filter((item): item is string => typeof item === "string")
+      : [],
+    exerciciosPuladosIds: Array.isArray(candidate.exerciciosPuladosIds)
+      ? candidate.exerciciosPuladosIds.filter((item): item is string => typeof item === "string")
+      : [],
+    startedAt: typeof candidate.startedAt === "string" ? candidate.startedAt : now,
+    endedAt: typeof candidate.endedAt === "string" ? candidate.endedAt : null,
+    createdAt: typeof candidate.createdAt === "string" ? candidate.createdAt : now,
+    updatedAt: typeof candidate.updatedAt === "string" ? candidate.updatedAt : now,
+    syncedAt: typeof candidate.syncedAt === "string" ? candidate.syncedAt : null,
   };
 }
 

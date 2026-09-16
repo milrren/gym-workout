@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       fichaNome: body.fichaNome,
       exercicios: body.exercicios,
       exerciciosConcluidosIds: body.exerciciosConcluidosIds,
+      exerciciosPuladosIds: Array.isArray(body.exerciciosPuladosIds) ? body.exerciciosPuladosIds : [],
       startedAt: body.startedAt,
       endedAt: body.endedAt ?? null,
       createdAt: body.createdAt,
