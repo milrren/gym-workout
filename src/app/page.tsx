@@ -84,7 +84,8 @@ export default function Home() {
 
   function iniciarTreino(ficha: Ficha) {
     const sessao = createSessao(ficha);
-    router.push(`/execucao/sessao/${sessao.id}`);
+    void sessao;
+    router.push("/historico");
   }
 
   return (
