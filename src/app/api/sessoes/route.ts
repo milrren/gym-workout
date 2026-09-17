@@ -44,6 +44,8 @@ export async function POST(request: NextRequest) {
       id: body.id,
       fichaId: body.fichaId,
       fichaNome: body.fichaNome,
+      descansoPadrao:
+        typeof body.descansoPadrao === "number" && body.descansoPadrao > 0 ? body.descansoPadrao : 60,
       exercicios: body.exercicios,
       exerciciosConcluidosIds: body.exerciciosConcluidosIds,
       exerciciosPuladosIds: Array.isArray(body.exerciciosPuladosIds) ? body.exerciciosPuladosIds : [],

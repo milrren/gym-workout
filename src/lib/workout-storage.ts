@@ -36,6 +36,7 @@ export type SessaoTreino = {
   id: string;
   fichaId: string;
   fichaNome: string;
+  descansoPadrao: number;
   exercicios: Exercicio[];
   exerciciosConcluidosIds: string[];
   exerciciosPuladosIds: string[];
@@ -206,6 +207,10 @@ export function normalizeSessaoTreino(input: unknown): SessaoTreino | null {
     id: candidate.id,
     fichaId: candidate.fichaId,
     fichaNome: typeof candidate.fichaNome === "string" ? candidate.fichaNome : "",
+    descansoPadrao:
+      typeof candidate.descansoPadrao === "number" && Number.isFinite(candidate.descansoPadrao) && candidate.descansoPadrao > 0
+        ? candidate.descansoPadrao
+        : 60,
     exercicios,
     exerciciosConcluidosIds: Array.isArray(candidate.exerciciosConcluidosIds)
       ? candidate.exerciciosConcluidosIds.filter((item): item is string => typeof item === "string")

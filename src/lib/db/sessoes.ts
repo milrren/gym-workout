@@ -10,6 +10,7 @@ type SessaoDoc = {
   userId: string;
   fichaId: string;
   fichaNome: string;
+  descansoPadrao: number;
   exercicios: Exercicio[];
   exerciciosConcluidosIds: string[];
   exerciciosPuladosIds: string[];
@@ -36,6 +37,7 @@ function toSessao(doc: SessaoDoc): SessaoTreino {
     id: doc._id,
     fichaId: doc.fichaId,
     fichaNome: doc.fichaNome,
+    descansoPadrao: doc.descansoPadrao ?? 60,
     exercicios: doc.exercicios,
     exerciciosConcluidosIds: doc.exerciciosConcluidosIds ?? [],
     exerciciosPuladosIds: doc.exerciciosPuladosIds ?? [],
@@ -63,6 +65,7 @@ export async function upsertSessao(userId: string, sessao: SessaoTreino): Promis
     userId,
     fichaId: sessao.fichaId,
     fichaNome: sessao.fichaNome,
+    descansoPadrao: sessao.descansoPadrao,
     exercicios: sessao.exercicios,
     exerciciosConcluidosIds: sessao.exerciciosConcluidosIds ?? [],
     exerciciosPuladosIds: sessao.exerciciosPuladosIds ?? [],

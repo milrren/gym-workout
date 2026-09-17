@@ -48,6 +48,7 @@ export function createSessao(ficha: Ficha): SessaoTreino {
     id: createId("sessao"),
     fichaId: ficha.id,
     fichaNome: ficha.nome,
+    descansoPadrao: ficha.descanso,
     exercicios: ficha.exercicios,
     exerciciosConcluidosIds: [],
     exerciciosPuladosIds: [],
