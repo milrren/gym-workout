@@ -48,6 +48,19 @@ export type SessaoTreino = {
   syncedAt: string | null;
 };
 
+export function getEffectiveRestSeconds(exercicio: Pick<Exercicio, "descansoSegundos"> | null | undefined, fallbackSeconds: number) {
+  if (!exercicio) {
+    return Math.max(0, fallbackSeconds);
+  }
+
+  const override = typeof exercicio.descansoSegundos === "number" ? exercicio.descansoSegundos : Number.NaN;
+  if (Number.isFinite(override) && override > 0) {
+    return Math.round(override);
+  }
+
+  return Math.max(0, fallbackSeconds);
+}
+
 export function createId(prefix: string) {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${prefix}-${crypto.randomUUID()}`;

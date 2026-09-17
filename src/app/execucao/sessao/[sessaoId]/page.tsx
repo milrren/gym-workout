@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import RestTimerModal from "@/components/RestTimerModal";
 import { getSessao, SESSOES_CHANGE_EVENT, updateSessao } from "@/lib/storage/sessoes-local";
-import { formatDateTime, SessaoTreino } from "@/lib/workout-storage";
+import { formatDateTime, getEffectiveRestSeconds, SessaoTreino } from "@/lib/workout-storage";
 
 const MUSCULO_EMOJI: Record<string, string> = {
   Peito: "◈",
@@ -98,13 +98,7 @@ export default function SessaoPage() {
       (id) => id !== exercicioAtual.id,
     );
     salvarSessao({ exerciciosConcluidosIds, exerciciosPuladosIds });
-
-    const descanso = exercicioAtual.descansoSegundos ?? sessao.descansoPadrao;
-    if (descanso > 0) {
-      setTimerSeconds(descanso);
-    } else {
-      setMostrarResumo(resolvidos + 1 >= total);
-    }
+    setMostrarResumo(resolvidos + 1 >= total);
   }
 
   function pularExercicio() {
@@ -120,6 +114,20 @@ export default function SessaoPage() {
     );
     salvarSessao({ exerciciosConcluidosIds, exerciciosPuladosIds });
     setMostrarResumo(resolvidos + 1 >= total);
+  }
+
+  function iniciarDescanso() {
+    if (!sessao || !exercicioAtual || sessao.endedAt) {
+      return;
+    }
+
+    const descanso = getEffectiveRestSeconds(exercicioAtual, sessao.descansoPadrao);
+    if (descanso > 0) {
+      setTimerSeconds(descanso);
+      return;
+    }
+
+    setTimerSeconds(0);
   }
 
   function avançarApósDescanso() {
@@ -196,9 +204,12 @@ export default function SessaoPage() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <button type="button" onClick={pularExercicio} className="rounded-xl border border-white/10 bg-[#172420] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent)]">
               Pular
+            </button>
+            <button type="button" onClick={iniciarDescanso} className="rounded-xl border border-white/10 bg-[#172420] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent)]">
+              Descanso {getEffectiveRestSeconds(exercicioAtual, sessao.descansoPadrao)}s
             </button>
             <button type="button" onClick={concluirExercicio} className="rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-bold text-[#0a120f] transition hover:brightness-95">
               ✓ Concluído
@@ -207,7 +218,7 @@ export default function SessaoPage() {
         </section>
       )}
 
-      {timerSeconds !== null ? (
+      {timerSeconds !== null && timerSeconds > 0 ? (
         <RestTimerModal
           key={timerSeconds}
           initialSeconds={timerSeconds}

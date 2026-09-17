@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import type { SessaoTreino } from "./workout-storage.ts";
+import { getEffectiveRestSeconds } from "./workout-storage.ts";
 import { calcularSequenciaDias } from "./stats.ts";
 
 test("calcularSequenciaDias conta dias consecutivos com sessão finalizada", () => {
@@ -77,4 +78,19 @@ test("calcularSequenciaDias ignora sessões sem finalização", () => {
   ];
 
   assert.equal(calcularSequenciaDias(sessoes as SessaoTreino[]), 0);
+});
+
+test("getEffectiveRestSeconds usa o descanso do exercício quando estiver definido", () => {
+  const exercicio = {
+    id: "ex1",
+    descricao: "Supino",
+    series: 3,
+    pesoSugerido: null,
+    grupoMuscular: "Peito",
+    repeticoes: "8-12",
+    descansoSegundos: 45,
+  };
+
+  assert.equal(getEffectiveRestSeconds(exercicio, 60), 45);
+  assert.equal(getEffectiveRestSeconds({ ...exercicio, descansoSegundos: undefined }, 60), 60);
 });
