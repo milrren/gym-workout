@@ -162,8 +162,8 @@ export default function SessaoPage() {
   return (
     <PageShell>
       <header className="rounded-2xl border border-white/10 bg-[#111c1a]/90 p-4 shadow-[0_20px_35px_rgba(0,0,0,0.25)] backdrop-blur sm:rounded-3xl sm:p-6">
-        <Link href="/execucao" className="text-sm font-semibold text-[var(--accent)] hover:underline">
-          Voltar para execução
+        <Link href="/" className="text-sm font-semibold text-[var(--accent)] hover:underline">
+          Voltar para início
         </Link>
         <div className="mt-4 flex items-end justify-between gap-3">
           <div>
@@ -241,8 +241,8 @@ function PageShell({ children }: { children: React.ReactNode }) {
 
 function BackLink() {
   return (
-    <Link href="/execucao" className="mt-6 inline-flex text-sm font-semibold text-[var(--accent)] hover:underline">
-      Voltar para execução
+    <Link href="/" className="mt-6 inline-flex text-sm font-semibold text-[var(--accent)] hover:underline">
+      Voltar para início
     </Link>
   );
 }
@@ -291,8 +291,8 @@ function Summary({ sessao, onFinalize }: { sessao: SessaoTreino; onFinalize: () 
           Finalizar Treino
         </button>
       )}
-      <Link href="/execucao" className="mt-3 inline-flex w-full justify-center rounded-xl border border-white/10 bg-[#172420] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--accent)]">
-        Voltar para sessões
+      <Link href="/" className="mt-3 inline-flex w-full justify-center rounded-xl border border-white/10 bg-[#172420] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--accent)]">
+        Voltar para início
       </Link>
     </section>
   );
