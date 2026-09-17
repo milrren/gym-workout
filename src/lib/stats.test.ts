@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import type { SessaoTreino } from "./workout-storage.ts";
-import { getEffectiveRestSeconds } from "./workout-storage.ts";
+import { getEffectiveRestSeconds, getPreviousSkippedExercise } from "./workout-storage.ts";
 import { calcularSequenciaDias } from "./stats.ts";
 
 test("calcularSequenciaDias conta dias consecutivos com sessão finalizada", () => {
@@ -93,4 +93,28 @@ test("getEffectiveRestSeconds usa o descanso do exercício quando estiver defini
 
   assert.equal(getEffectiveRestSeconds(exercicio, 60), 45);
   assert.equal(getEffectiveRestSeconds({ ...exercicio, descansoSegundos: undefined }, 60), 60);
+});
+
+test("getPreviousSkippedExercise retorna o exercício anterior pulado na sequência", () => {
+  const sessao = {
+    id: "s1",
+    fichaId: "f1",
+    fichaNome: "Ficha 1",
+    descansoPadrao: 60,
+    exercicios: [
+      { id: "a", descricao: "A", series: 3, pesoSugerido: null, grupoMuscular: "Peito", repeticoes: "8-12" },
+      { id: "b", descricao: "B", series: 3, pesoSugerido: null, grupoMuscular: "Costas", repeticoes: "8-12" },
+      { id: "c", descricao: "C", series: 3, pesoSugerido: null, grupoMuscular: "Pernas", repeticoes: "8-12" },
+    ],
+    exerciciosConcluidosIds: ["a"],
+    exerciciosPuladosIds: ["b"],
+    startedAt: new Date().toISOString(),
+    endedAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    syncedAt: null,
+  } as SessaoTreino;
+
+  assert.equal(getPreviousSkippedExercise(sessao, "c")?.id, "b");
+  assert.equal(getPreviousSkippedExercise(sessao, "b"), null);
 });

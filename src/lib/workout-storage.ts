@@ -61,6 +61,20 @@ export function getEffectiveRestSeconds(exercicio: Pick<Exercicio, "descansoSegu
   return Math.max(0, fallbackSeconds);
 }
 
+export function getPreviousSkippedExercise(sessao: Pick<SessaoTreino, "exercicios" | "exerciciosPuladosIds">, currentExerciseId: string) {
+  const currentIndex = sessao.exercicios.findIndex((exercicio) => exercicio.id === currentExerciseId);
+  if (currentIndex <= 0) {
+    return null;
+  }
+
+  const previousExercise = sessao.exercicios[currentIndex - 1];
+  if (!previousExercise) {
+    return null;
+  }
+
+  return sessao.exerciciosPuladosIds.includes(previousExercise.id) ? previousExercise : null;
+}
+
 export function createId(prefix: string) {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${prefix}-${crypto.randomUUID()}`;

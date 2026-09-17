@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import RestTimerModal from "@/components/RestTimerModal";
 import { getSessao, SESSOES_CHANGE_EVENT, updateSessao } from "@/lib/storage/sessoes-local";
-import { formatDateTime, getEffectiveRestSeconds, SessaoTreino } from "@/lib/workout-storage";
+import { formatDateTime, getEffectiveRestSeconds, getPreviousSkippedExercise, SessaoTreino } from "@/lib/workout-storage";
 
 const MUSCULO_EMOJI: Record<string, string> = {
   Peito: "◈",
@@ -70,6 +70,13 @@ export default function SessaoPage() {
   const total = sessao?.exercicios.length ?? 0;
   const percentual = total === 0 ? 0 : Math.round((resolvidos / total) * 100);
   const resumoVisivel = Boolean(sessao?.endedAt) || mostrarResumo || !exercicioAtual;
+  const exercícioPuladoAnterior = useMemo(() => {
+    if (!sessao || !exercicioAtual) {
+      return null;
+    }
+
+    return getPreviousSkippedExercise(sessao, exercicioAtual.id);
+  }, [sessao, exercicioAtual]);
 
   function salvarSessao(data: Partial<Pick<SessaoTreino, "exerciciosConcluidosIds" | "exerciciosPuladosIds" | "endedAt">>) {
     if (!sessao) {
@@ -130,6 +137,51 @@ export default function SessaoPage() {
     setTimerSeconds(0);
   }
 
+  function voltarExercicioPulado() {
+    if (!sessao || !exercícioPuladoAnterior || sessao.endedAt) {
+      return;
+    }
+
+    const exerciciosPuladosIds = sessao.exerciciosPuladosIds.filter(
+      (id) => id !== exercícioPuladoAnterior.id,
+    );
+    const exerciciosConcluidosIds = sessao.exerciciosConcluidosIds.filter(
+      (id) => id !== exercícioPuladoAnterior.id,
+    );
+
+    const atualizada = updateSessao(sessao.id, {
+      exerciciosPuladosIds,
+      exerciciosConcluidosIds,
+    });
+
+    if (atualizada) {
+      setSessao(atualizada);
+    }
+  }
+
+  function reabrirExercicioPulado(exercicioId: string) {
+    if (!sessao || sessao.endedAt) {
+      return;
+    }
+
+    const exerciciosPuladosIds = sessao.exerciciosPuladosIds.filter(
+      (id) => id !== exercicioId,
+    );
+    const exerciciosConcluidosIds = sessao.exerciciosConcluidosIds.filter(
+      (id) => id !== exercicioId,
+    );
+
+    const atualizada = updateSessao(sessao.id, {
+      exerciciosPuladosIds,
+      exerciciosConcluidosIds,
+    });
+
+    if (atualizada) {
+      setSessao(atualizada);
+      setMostrarResumo(false);
+    }
+  }
+
   function avançarApósDescanso() {
     setTimerSeconds(null);
     setMostrarResumo(resolvidos + 1 >= total);
@@ -179,7 +231,7 @@ export default function SessaoPage() {
       </header>
 
       {resumoVisivel ? (
-        <Summary sessao={sessao} onFinalize={finalizarTreino} />
+        <Summary sessao={sessao} onFinalize={finalizarTreino} onReopenSkipped={reabrirExercicioPulado} />
       ) : (
         <section className="rounded-2xl border border-white/10 bg-[#111c1a] p-4 shadow-[0_18px_30px_rgba(0,0,0,0.25)] sm:rounded-3xl sm:p-8">
           <div className="flex items-center justify-between gap-3">
@@ -215,6 +267,18 @@ export default function SessaoPage() {
               ✓ Concluído
             </button>
           </div>
+
+          {exercícioPuladoAnterior ? (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={voltarExercicioPulado}
+                className="w-full rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200 transition hover:border-amber-300 hover:bg-amber-500/15"
+              >
+                Voltar para {exercícioPuladoAnterior.descricao}
+              </button>
+            </div>
+          ) : null}
         </section>
       )}
 
@@ -255,7 +319,7 @@ function StatChip({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Summary({ sessao, onFinalize }: { sessao: SessaoTreino; onFinalize: () => void }) {
+function Summary({ sessao, onFinalize, onReopenSkipped }: { sessao: SessaoTreino; onFinalize: () => void; onReopenSkipped: (exercicioId: string) => void }) {
   const finalizada = Boolean(sessao.endedAt);
 
   return (
@@ -273,9 +337,18 @@ function Summary({ sessao, onFinalize }: { sessao: SessaoTreino; onFinalize: () 
       <ul className="mt-6 space-y-2">
         {sessao.exercicios.map((exercicio) => {
           const status = getStatus(sessao, exercicio.id);
+          const isSkipped = status === "Pulado";
+
           return (
             <li key={exercicio.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#172420] px-4 py-3">
-              <span className="text-sm font-semibold text-[var(--text-primary)]">{exercicio.descricao}</span>
+              <button
+                type="button"
+                onClick={isSkipped ? () => onReopenSkipped(exercicio.id) : undefined}
+                disabled={!isSkipped}
+                className={`text-left text-sm font-semibold ${isSkipped ? "cursor-pointer text-[var(--text-primary)] hover:text-[var(--accent)]" : "text-[var(--text-primary)]"}`}
+              >
+                {exercicio.descricao}
+              </button>
               <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${status === "Feito" ? "bg-[var(--accent)] text-[#0a120f]" : status === "Pulado" ? "bg-[#2b3035] text-[var(--text-secondary)]" : "border border-white/10 text-[var(--text-secondary)]"}`}>
                 {status}
               </span>
